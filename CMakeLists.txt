@@ -19,12 +19,16 @@ find_package(ament_cmake REQUIRED)
 # Adding global dependencies
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(Open3D REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # Adding executables
 add_executable(process_lidar
   src/process_lidar.cpp
   src/main.cpp)
-ament_target_dependencies(process_lidar rclcpp sensor_msgs)
+ament_target_dependencies(process_lidar rclcpp sensor_msgs visualization_msgs)
+target_link_libraries(process_lidar Open3D::Open3D Eigen3::Eigen) # As it's not a ros2 package
 
 
 # Install targets section (so that ros2 run can find your nodes)

@@ -18,6 +18,9 @@
     <!-- Added by the author-->
     <depend>rclcpp</depend>
     <depend>sensor_msgs</depend>
+    <depend>visualization_msgs</depend>
+    <depend>Open3D</depend>
+    <depend>Eigen</depend>
     <!-- END -->
 
   </export>
