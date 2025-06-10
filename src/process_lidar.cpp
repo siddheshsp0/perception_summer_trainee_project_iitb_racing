@@ -157,6 +157,7 @@ void ProcessLidar :: lidar_raw_sub_callback(const sensor_msgs::msg::PointCloud::
     // );
 
 // Performing DBSCAN to identify cone groups
+    if (positions.size()==0) {return;}
     // Converting PointCloud data to open3d point cloud
     auto o3d_pcd = std::make_shared<open3d::geometry::PointCloud>();
     for (const auto& point : positions) {
