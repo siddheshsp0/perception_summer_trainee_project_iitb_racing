@@ -22,13 +22,17 @@ find_package(sensor_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(Open3D REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(pcl_conversions REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
 
 # Adding executables
 add_executable(process_lidar
   src/process_lidar.cpp
   src/main.cpp)
-ament_target_dependencies(process_lidar rclcpp sensor_msgs visualization_msgs)
-target_link_libraries(process_lidar Open3D::Open3D Eigen3::Eigen) # As it's not a ros2 package
+ament_target_dependencies(process_lidar rclcpp sensor_msgs visualization_msgs pcl_conversions)
+target_link_libraries(process_lidar Open3D::Open3D Eigen3::Eigen ${PCL_LIBRARIES}) # As it's not a ros2 package
 
 
 # Install targets section (so that ros2 run can find your nodes)

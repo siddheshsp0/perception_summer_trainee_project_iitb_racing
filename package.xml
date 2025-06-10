@@ -21,6 +21,8 @@
     <depend>visualization_msgs</depend>
     <depend>Open3D</depend>
     <depend>Eigen</depend>
+    <depend>pcl_conversions</depend>
+    <depend>pcl_msgs</depend>
     <!-- END -->
 
   </export>

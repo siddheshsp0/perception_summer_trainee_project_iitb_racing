@@ -10,6 +10,26 @@
 #include <cmath>
 #include <open3d/Open3D.h>
 #include <Eigen/Dense>
+#include <pcl/point_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+
+
+void eraseIndices(
+    const std::shared_ptr<sensor_msgs::msg::PointCloud>& msg,
+    const std::vector<size_t>& indices_to_erase,
+    std::vector<std::vector<double>> &positions,
+    std::vector<double> &intens
+) {
+    std::unordered_set<size_t> erase_set(indices_to_erase.begin(), indices_to_erase.end());
+    for (size_t i = 0; i < msg->points.size(); ++i) {
+        if (erase_set.find(i) == erase_set.end()) {
+            const auto& pt = msg->points.at(i);
+            positions.push_back({static_cast<double>(pt.x), static_cast<double>(pt.y), static_cast<double>(pt.z)});
+            intens.push_back(msg->channels.at(0).values.at(i));
+        }
+    }
+}
+
 
 
 ProcessLidar :: ProcessLidar() : Node("process_lidar"){
@@ -21,15 +41,15 @@ ProcessLidar :: ProcessLidar() : Node("process_lidar"){
         this->lidar_raw_input_topic,
         10,
         std::bind(&::ProcessLidar::lidar_raw_sub_callback, this, std::placeholders::_1));
-    this->lidar_raw_output_rviz_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
-        this->lidar_raw_output_rviz_topic,
-        10
-    );
-    // For the reference vehicle
-    this->reference_vehicle_rviz_pub = this->create_publisher<visualization_msgs::msg::Marker>(
-        this->reference_vehicle_rviz_topic,
-        10
-    );
+    // this->lidar_raw_output_rviz_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+    //     this->lidar_raw_output_rviz_topic,
+    //     10
+    // );
+    // // For the reference vehicle
+    // this->reference_vehicle_rviz_pub = this->create_publisher<visualization_msgs::msg::Marker>(
+    //     this->reference_vehicle_rviz_topic,
+    //     10
+    // );
     // For final classified cones
     this->classified_cones_output_rviz_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
         this->classified_cones_output_rviz_topic,
@@ -87,26 +107,54 @@ void ProcessLidar :: lidar_raw_sub_callback(const sensor_msgs::msg::PointCloud::
     double max_intensity = *std::max_element(msg->channels[0].values.begin(), msg->channels[0].values.end());
     double min_intensity = *std::min_element(msg->channels[0].values.begin(), msg->channels[0].values.end());
 
-    for (size_t i = 0; i < msg->points.size(); ++i) {
-        const auto& pt = msg->points[i];
-        if(pt.z<this->lidar_z_threshhold){continue;} // Filter out ground use thresholding
-        // Normalising and adding intensities to the intensities vector
-        // (i-min_i)/(max_i-min_i)
-        double norm_intensity = (msg->channels[0].values[i] - min_intensity)/(max_intensity-min_intensity);
-        colors.push_back({norm_intensity, (0.5-std::abs(0.5-norm_intensity))*2, 1.0-norm_intensity});  // RGB (highest to lowest intensity)
-        intensities.push_back(msg->channels[0].values[i]);
-        positions.push_back({pt.x - rear_end_x, pt.y, pt.z - ground_z}); // Converted wrt Rear top end of the car
+    //RANSAC
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_point_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+    for(auto &pt: msg->points){
+        pcl_point_cloud->points.push_back(pcl::PointXYZ(pt.x, pt.y, pt.z));
     }
 
-    this->publishMarkerArray(
-        visualization_msgs::msg::Marker::SPHERE,
-        "marker",
-        this->fixed_frame,
-        {positions, colors},
-        this->lidar_raw_output_rviz_pub,
-        true,
-        {0.03, 0.03, 0.03}
-    );
+    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr ground_pts(new pcl::PointIndices);
+
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
+    seg.setOptimizeCoefficients(true);
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setDistanceThreshold(this->ransac_threshold);
+
+    seg.setInputCloud(pcl_point_cloud);
+    seg.segment(*ground_pts, *coefficients);
+
+        //excluding ground pts
+    std::vector<size_t> indices_to_delete;
+    for(auto &indice : ground_pts->indices){
+        indices_to_delete.push_back(indice);
+    }
+    eraseIndices(msg, indices_to_delete, positions, intensities);
+
+
+    
+
+    // for (size_t i = 0; i < msg->points.size(); ++i) {
+    //     const auto& pt = msg->points[i];
+    //     if(pt.z<this->lidar_z_threshhold){continue;} // Filter out ground use thresholding
+    //     // Normalising and adding intensities to the intensities vector
+    //     // (i-min_i)/(max_i-min_i)
+    //     double norm_intensity = (msg->channels[0].values[i] - min_intensity)/(max_intensity-min_intensity);
+    //     colors.push_back({norm_intensity, (0.5-std::abs(0.5-norm_intensity))*2, 1.0-norm_intensity});  // RGB (highest to lowest intensity)
+    //     intensities.push_back(msg->channels[0].values[i]);
+    //     positions.push_back({pt.x, pt.y, pt.z});
+    // }
+
+    // this->publishMarkerArray(
+    //     visualization_msgs::msg::Marker::SPHERE,
+    //     "marker",
+    //     this->fixed_frame,
+    //     {positions, colors},
+    //     this->lidar_raw_output_rviz_pub,
+    //     true,
+    //     {0.03, 0.03, 0.03}
+    // );
 
 // Performing DBSCAN to identify cone groups
     // Converting PointCloud data to open3d point cloud

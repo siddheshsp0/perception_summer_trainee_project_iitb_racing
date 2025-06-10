@@ -20,23 +20,24 @@ class ProcessLidar : public rclcpp::Node {
 private:
 // Constants
     const std::string namespace_ = "process_lidar";
-    const std::string fixed_frame = "world"; // Can change this later
+    const std::string fixed_frame = "Lidar_F"; // Can change this later
     double dbscan_epsilon = 1.0;
     int dbscan_minpoints = 2;
     // Relative to Lidar, in metres
     const double ground_z = -0.1629;
     const double rear_end_x = -2.921;
-    const double lidar_z_threshhold = this->ground_z;
+    const double lidar_z_threshhold = this->ground_z+0.05;
+    const double ransac_threshold = 0.001;
 
 // Topics
     const std::string lidar_raw_input_topic = "/carmaker/pointcloud"; // Lidar data input
-    const std::string lidar_raw_output_rviz_topic = this->namespace_+"/lidar/raw"; // Lidar raw data output topic
+    // const std::string lidar_raw_output_rviz_topic = this->namespace_+"/lidar/raw"; // Lidar raw data output topic
     const std::string classified_cones_output_rviz_topic = this->namespace_+"/classified_cones"; // Final output
     const std::string reference_vehicle_rviz_topic = this->namespace_+"/reference_vehicle"; // Reference vehicle
     
 // Publishers and Subscribers
     rclcpp::Subscription<sensor_msgs::msg::PointCloud>::SharedPtr lidar_raw_input_sub;
-    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr lidar_raw_output_rviz_pub;
+    // rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr lidar_raw_output_rviz_pub;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr reference_vehicle_rviz_pub;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr classified_cones_output_rviz_pub;
 
