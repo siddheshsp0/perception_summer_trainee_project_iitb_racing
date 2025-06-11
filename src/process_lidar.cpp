@@ -104,8 +104,8 @@ void ProcessLidar :: lidar_raw_sub_callback(const sensor_msgs::msg::PointCloud::
 // Publishing raw data and initialising position and intensity vectors
     std::vector<std::vector<double>> positions,colors;
     std::vector<double> intensities;
-    double max_intensity = *std::max_element(msg->channels[0].values.begin(), msg->channels[0].values.end());
-    double min_intensity = *std::min_element(msg->channels[0].values.begin(), msg->channels[0].values.end());
+    // double max_intensity = *std::max_element(msg->channels[0].values.begin(), msg->channels[0].values.end());
+    // double min_intensity = *std::min_element(msg->channels[0].values.begin(), msg->channels[0].values.end());
 
     //RANSAC
     pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_point_cloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -273,32 +273,28 @@ void ProcessLidar :: publishMarkerArray(visualization_msgs::msg::Marker::_type_t
         del_marker.action = visualization_msgs::msg::Marker::DELETEALL;
         marker_array.markers.push_back(del_marker);
     }
+    visualization_msgs::msg::Marker marker;
+    marker.header.frame_id = frame_id;
+    marker.header.stamp = this->now();
+    marker.ns = ns;
+    marker.type = type;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = scales.at(0);
+    marker.scale.y = scales.at(1);
+    marker.scale.z = scales.at(2); 
     for (size_t i=0; i < positions_colours.at(0).size(); i++){
-        visualization_msgs::msg::Marker marker;
-        marker.header.frame_id = frame_id;
-        marker.header.stamp = this->now();
-        marker.ns = ns;
         marker.id = i;
-        marker.type = type;
-        marker.action = visualization_msgs::msg::Marker::ADD;
-
         marker.pose.position.x = positions_colours.at(0).at(i).at(0);
         marker.pose.position.y = positions_colours.at(0).at(i).at(1);
         marker.pose.position.z = positions_colours.at(0).at(i).at(2);
-        marker.pose.orientation.x = 0.0;
-        marker.pose.orientation.y = 0.0;
-        marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 1.0;
-
-        marker.scale.x = scales.at(0);
-        marker.scale.y = scales.at(1);
-        marker.scale.z = scales.at(2); 
-
         marker.color.a = 1.0;
         marker.color.r = positions_colours.at(1).at(i).at(0);
         marker.color.g = positions_colours.at(1).at(i).at(1);
         marker.color.b = positions_colours.at(1).at(i).at(2);
-
         marker_array.markers.push_back(marker);
     }
     publisher->publish(marker_array);

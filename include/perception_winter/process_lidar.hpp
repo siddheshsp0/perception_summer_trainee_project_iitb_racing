@@ -27,7 +27,7 @@ private:
     const double ground_z = -0.1629;
     const double rear_end_x = -2.921;
     const double lidar_z_threshhold = this->ground_z+0.05;
-    const double ransac_threshold = 0.025;
+    const double ransac_threshold = 0.03;
 
 // Topics
     const std::string lidar_raw_input_topic = "/carmaker/pointcloud"; // Lidar data input
