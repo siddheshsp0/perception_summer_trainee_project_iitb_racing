@@ -52,6 +52,11 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/launch
 )
 
+install(
+  DIRECTORY rviz_config
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # ----------------------------- END -----------------------
 
 
