@@ -57,6 +57,11 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(
+  DIRECTORY rosbag
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # ----------------------------- END -----------------------
 
 
